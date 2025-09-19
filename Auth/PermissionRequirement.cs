@@ -1,15 +1,35 @@
-﻿
-// File: Auth/PermissionHandler.cs
 using Microsoft.AspNetCore.Authorization;
-namespace MesEnterprise.Auth
+
+namespace MesEnterprise.Auth;
+
+public class PermissionRequirement : IAuthorizationRequirement
 {
-    public class PermissionHandler : AuthorizationHandler<PermissionRequirement>
+    public PermissionRequirement(string permission)
     {
-        protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, PermissionRequirement requirement)
+        Permission = permission;
+    }
+
+    public string Permission { get; }
+}
+
+public sealed class PermissionHandler : AuthorizationHandler<PermissionRequirement>
+{
+    protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, PermissionRequirement requirement)
+    {
+        var hasPermission = context.User.Claims.Any(c => c.Type == "permission" && c.Value == requirement.Permission);
+        if (hasPermission)
         {
-            var ok = context.User.Claims.Any(c => c.Type == "permissions" && c.Value == requirement.Permission);
-            if (ok) context.Succeed(requirement);
-            return Task.CompletedTask;
+            context.Succeed(requirement);
         }
+
+        return Task.CompletedTask;
+    }
+}
+
+public sealed class PermissionAuthorizeAttribute : AuthorizeAttribute
+{
+    public PermissionAuthorizeAttribute(string permission)
+    {
+        Policy = permission;
     }
 }

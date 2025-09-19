@@ -1,18 +1,42 @@
-﻿using Microsoft.Extensions.Hosting;
-namespace MesEnterprise
+using Hangfire;
+using Microsoft.Extensions.Hosting;
+
+namespace MesEnterprise.Background;
+
+public class AuditBackgroundWorker : IHostedService
 {
-    public class AuditBackgroundWorker : BackgroundService
+    private readonly ILogger<AuditBackgroundWorker> _logger;
+    private readonly IRecurringJobManager _recurringJobManager;
+
+    public AuditBackgroundWorker(ILogger<AuditBackgroundWorker> logger, IRecurringJobManager recurringJobManager)
     {
-        private readonly ILogger<AuditBackgroundWorker> _logger;
-        public AuditBackgroundWorker(ILogger<AuditBackgroundWorker> logger) { _logger = logger; }
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-        {
-            _logger.LogInformation("AuditBackgroundWorker started");
-            while (!stoppingToken.IsCancellationRequested)
-            {
-                await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
-                // placeholder: batch upload AuditLogs to external store, or compress, etc.
-            }
-        }
+        _logger = logger;
+        _recurringJobManager = recurringJobManager;
+    }
+
+    public Task StartAsync(CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Configuring recurring background jobs");
+        _recurringJobManager.AddOrUpdate("audit-log-cleanup", () => PerformAuditCleanup(), Cron.Daily);
+        _recurringJobManager.AddOrUpdate("machine-heartbeat", () => PublishHeartbeat(), Cron.Minutely);
+        return Task.CompletedTask;
+    }
+
+    public Task StopAsync(CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Stopping background worker");
+        return Task.CompletedTask;
+    }
+
+    public Task PerformAuditCleanup()
+    {
+        _logger.LogInformation("Executing audit log cleanup job at {Time}", DateTimeOffset.UtcNow);
+        return Task.CompletedTask;
+    }
+
+    public Task PublishHeartbeat()
+    {
+        _logger.LogDebug("Publishing heartbeat at {Time}", DateTimeOffset.UtcNow);
+        return Task.CompletedTask;
     }
 }
