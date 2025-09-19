@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="FactoryNotFound" xml:space="preserve">
+    <value>The requested factory was not found.</value>
+  </data>
+  <data name="FactoryCreated" xml:space="preserve">
+    <value>Factory created successfully.</value>
+  </data>
+  <data name="FactoryUpdated" xml:space="preserve">
+    <value>Factory updated successfully.</value>
+  </data>
+  <data name="FactoryDeleted" xml:space="preserve">
+    <value>Factory disabled successfully.</value>
+  </data>
+  <data name="FactoryImportSummary" xml:space="preserve">
+    <value>Import completed: {0} created, {1} updated, {2} skipped.</value>
+  </data>
+  <data name="ExportSheetName" xml:space="preserve">
+    <value>Factories</value>
+  </data>
+  <data name="FactoryCodeHeader" xml:space="preserve">
+    <value>Factory Code</value>
+  </data>
+  <data name="FactoryNameHeader" xml:space="preserve">
+    <value>Factory Name</value>
+  </data>
+  <data name="FactoryDescHeader" xml:space="preserve">
+    <value>Description</value>
+  </data>
+  <data name="EnabledHeader" xml:space="preserve">
+    <value>Enabled</value>
+  </data>
+  <data name="UpdateTimeHeader" xml:space="preserve">
+    <value>Updated On</value>
+  </data>
+  <data name="ExportFileName" xml:space="preserve">
+    <value>factories_{0}.xlsx</value>
+  </data>
+</root>

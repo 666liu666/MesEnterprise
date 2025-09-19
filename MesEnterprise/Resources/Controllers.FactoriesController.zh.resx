@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="FactoryNotFound" xml:space="preserve">
+    <value>未找到指定的厂别资料。</value>
+  </data>
+  <data name="FactoryCreated" xml:space="preserve">
+    <value>厂别新增成功。</value>
+  </data>
+  <data name="FactoryUpdated" xml:space="preserve">
+    <value>厂别更新成功。</value>
+  </data>
+  <data name="FactoryDeleted" xml:space="preserve">
+    <value>厂别已停用。</value>
+  </data>
+  <data name="FactoryImportSummary" xml:space="preserve">
+    <value>汇入完成：新增 {0} 笔，更新 {1} 笔，略过 {2} 笔。</value>
+  </data>
+  <data name="ExportSheetName" xml:space="preserve">
+    <value>厂别清单</value>
+  </data>
+  <data name="FactoryCodeHeader" xml:space="preserve">
+    <value>厂别代码</value>
+  </data>
+  <data name="FactoryNameHeader" xml:space="preserve">
+    <value>厂别名称</value>
+  </data>
+  <data name="FactoryDescHeader" xml:space="preserve">
+    <value>说明</value>
+  </data>
+  <data name="EnabledHeader" xml:space="preserve">
+    <value>启用</value>
+  </data>
+  <data name="UpdateTimeHeader" xml:space="preserve">
+    <value>更新时间</value>
+  </data>
+  <data name="ExportFileName" xml:space="preserve">
+    <value>factory_{0}.xlsx</value>
+  </data>
+</root>

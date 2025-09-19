@@ -1,148 +1,139 @@
-
-using System;
+using System.Globalization;
 using System.Text;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using OpenTelemetry.Trace;
-using Prometheus;
+using MesEnterprise.Auth;
 using MesEnterprise.Data;
 using MesEnterprise.Domain;
-using MesEnterprise.Auth;
-using MesEnterprise.Middleware;
-using MesEnterprise.Cache;
-using MesEnterprise.Realtime;
-using MesEnterprise.Plugins;
-using Hangfire;
-using MesEnterprise.Cache;
-using MesEnterprise.Plugins;
-using MesEnterprise.Realtime;
-
+using MesEnterprise.Resources;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Localization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 
 namespace MesEnterprise;
 
 public class Program
 {
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
-        builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-                             .AddEnvironmentVariables();
 
-        // Add services
-        // Oracle DbContext
-        builder.Services.AddDbContext<MesDbContext>(options =>
-            options.UseOracle(builder.Configuration.GetConnectionString("OracleDb")));
-        builder.Services.AddIdentityCore<ApplicationUser>(opts => { })
+        builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+
+        builder.Services.AddDbContext<AppDbContext>(options =>
+        {
+            var oracleConnection = builder.Configuration.GetConnectionString("OracleDb");
+            if (!string.IsNullOrWhiteSpace(oracleConnection))
+            {
+                options.UseOracle(oracleConnection);
+            }
+            else
+            {
+                options.UseInMemoryDatabase("MesEnterprise");
+            }
+        });
+
+        builder.Services.AddIdentityCore<ApplicationUser>(options =>
+            {
+                options.User.RequireUniqueEmail = false;
+            })
             .AddRoles<ApplicationRole>()
-            .AddEntityFrameworkStores<MesDbContext>()
+            .AddEntityFrameworkStores<AppDbContext>()
             .AddDefaultTokenProviders();
 
-        // JWT
-        var jwtSection = builder.Configuration.GetSection("Jwt");
-        builder.Services.Configure<JwtOptions>(jwtSection);
-        builder.Services.AddSingleton<IJwtService, JwtService>();
-        var key = Encoding.UTF8.GetBytes(jwtSection["Key"] ?? "dev_key_replace");
+        builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));
+        builder.Services.AddScoped<IJwtService, JwtService>();
+
         builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
+                var jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtOptions>() ?? new JwtOptions();
+                if (string.IsNullOrWhiteSpace(jwtOptions.Key))
+                {
+                    jwtOptions.Key = "ChangeThisDevelopmentKey";
+                }
+
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
-                    ValidIssuer = jwtSection["Issuer"],
                     ValidateAudience = true,
-                    ValidAudience = jwtSection["Audience"],
+                    ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(key),
-                    ValidateLifetime = true
+                    ValidIssuer = jwtOptions.Issuer,
+                    ValidAudience = jwtOptions.Audience,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.Key))
                 };
             });
 
-        // Authorization: dynamic policies for permissions
-        builder.Services.AddAuthorization(options => { /* policies added at runtime via attribute */ });
-        builder.Services.AddScoped<PermissionHandler>();
+        builder.Services.AddAuthorization();
 
-        // Caching
-        builder.Services.AddMemoryCache();
-        builder.Services.AddSingleton<IRedisConnector, RedisConnector>();
-        builder.Services.AddSingleton<ICacheService, HybridCacheService>();
+        builder.Services.AddHttpContextAccessor();
 
-        // Hangfire
-        builder.Services.AddHangfire(cfg => cfg.UseMemoryStorage());
-        builder.Services.AddHangfireServer();
+        builder.Services.AddControllers()
+            .AddViewLocalization()
+            .AddDataAnnotationsLocalization(options =>
+            {
+                options.DataAnnotationLocalizerProvider = (type, factory) =>
+                    factory.Create(typeof(Resources.SharedResource));
+            })
+            .ConfigureApiBehaviorOptions(options =>
+            {
+                options.InvalidModelStateResponseFactory = context =>
+                {
+                    var problemDetails = new ValidationProblemDetails(context.ModelState);
+                    return new BadRequestObjectResult(problemDetails);
+                };
+            });
 
-        // SignalR
-        builder.Services.AddSignalR();
-
-        // Health, OpenTelemetry, Prometheus
-        builder.Services.AddHealthChecks()
-            .AddSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"), name: "sql")
-            .AddRedis(builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379", name: "redis");
-        object value = builder.Services.AddOpenTelemetryTracing(tracerProviderBuilder =>
-        {
-            tracerProviderBuilder.AddAspNetCoreInstrumentation();
-        });
-
-        // Controllers, Swagger
-        builder.Services.AddControllers().AddFluentValidation();
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
+        builder.Services.AddResponseCaching();
 
-        // Plugin loader: load plugins from ./plugins at startup into DI (IPlugin)
-        PluginLoader.LoadPlugins(Path.Combine(AppContext.BaseDirectory, "plugins"), builder.Services);
+        var supportedCultures = new[]
+        {
+            new CultureInfo("en"),
+            new CultureInfo("zh")
+        };
 
-        // DI scan (simple)
-        builder.Services.Scan(scan => scan.FromCallingAssembly().AddClasses().AsImplementedInterfaces().WithScopedLifetime());
-
-        // Background audit worker (uses Channel inside)
-        builder.Services.AddHostedService<AuditBackgroundWorker>();
+        builder.Services.Configure<RequestLocalizationOptions>(options =>
+        {
+            options.DefaultRequestCulture = new RequestCulture("en");
+            options.SupportedCultures = supportedCultures;
+            options.SupportedUICultures = supportedCultures;
+        });
 
         var app = builder.Build();
 
-        // Ensure DB
         using (var scope = app.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            db.Database.Migrate();
-            await DbSeeder.SeedAsync(scope.ServiceProvider);
+            try
+            {
+                await db.Database.EnsureCreatedAsync();
+            }
+            catch
+            {
+                // ignored - EnsureCreated is optional when the database is managed externally.
+            }
         }
 
-        // Middlewares
-        app.UseMiddleware<ExceptionHandlingMiddleware>();
-        app.UseMiddleware<AuditMiddleware>();
+        var localizationOptions = app.Services.GetRequiredService<IOptions<RequestLocalizationOptions>>().Value;
+        app.UseRequestLocalization(localizationOptions);
+        app.UseResponseCaching();
 
-        // Security headers
-        app.Use(async (ctx, next) =>
+        if (app.Environment.IsDevelopment())
         {
-            ctx.Response.Headers["X-Content-Type-Options"] = "nosniff";
-            ctx.Response.Headers["X-Frame-Options"] = "DENY";
-            ctx.Response.Headers["Referrer-Policy"] = "no-referrer";
-            await next();
-        });
+            app.UseSwagger();
+            app.UseSwaggerUI();
+        }
 
-        app.UseRouting();
+        app.UseHttpsRedirection();
         app.UseAuthentication();
         app.UseAuthorization();
 
-        // Prometheus
-        app.UseMetricServer();
-        app.UseHttpMetrics();
-
-        // Hangfire dashboard (in prod add auth)
-        app.UseHangfireDashboard("/hangfire");
-
-        // SignalR hub
-        app.MapHub<MesHub>("/hubs/mes");
-
-        // Health
-        app.MapHealthChecks("/health/ready");
-        app.MapHealthChecks("/health/live");
-
-        if (app.Environment.IsDevelopment()) { app.UseSwagger(); app.UseSwaggerUI(); }
         app.MapControllers();
 
-        app.Run();
+        await app.RunAsync();
     }
 }
-
