@@ -1,24 +1,50 @@
-﻿namespace MesEnterprise.Models
-{
-    public class SysFactory
-    {
-        public decimal FactoryId { get; set; }
-        public string? FactoryCode { get; set; }
-        public string? FactoryName { get; set; }
-        public string? FactoryDesc { get; set; }
-        public decimal? UpdateUserId { get; set; }
-        public DateTime? UpdateTime { get; set; }
-        public string? Enabled { get; set; }
-    }
+using System.ComponentModel.DataAnnotations;
 
-    public class SysHtFactory
-    {
-        public decimal FactoryId { get; set; }
-        public string? FactoryCode { get; set; }
-        public string? FactoryName { get; set; }
-        public string? FactoryDesc { get; set; }
-        public decimal? UpdateUserId { get; set; }
-        public DateTime? UpdateTime { get; set; }
-        public string? Enabled { get; set; }
-    }
+namespace MesEnterprise.Models;
+
+public class SysFactory
+{
+    [Key]
+    public decimal FactoryId { get; set; }
+
+    [Required]
+    [StringLength(10)]
+    public string? FactoryCode { get; set; }
+
+    [Required]
+    [StringLength(25)]
+    public string? FactoryName { get; set; }
+
+    [StringLength(50)]
+    public string? FactoryDesc { get; set; }
+
+    public decimal? UpdateUserId { get; set; }
+
+    public DateTime? UpdateTime { get; set; }
+
+    [StringLength(1)]
+    public string? Enabled { get; set; }
+}
+
+public class SysHtFactory
+{
+    public decimal FactoryId { get; set; }
+
+    [Required]
+    [StringLength(10)]
+    public string? FactoryCode { get; set; }
+
+    [Required]
+    [StringLength(25)]
+    public string? FactoryName { get; set; }
+
+    [StringLength(50)]
+    public string? FactoryDesc { get; set; }
+
+    public decimal? UpdateUserId { get; set; }
+
+    public DateTime? UpdateTime { get; set; }
+
+    [StringLength(1)]
+    public string? Enabled { get; set; }
 }

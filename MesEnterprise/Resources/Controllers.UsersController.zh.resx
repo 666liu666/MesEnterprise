@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="UserNotFound" xml:space="preserve">
+    <value>未找到指定的用户。</value>
+  </data>
+  <data name="UserCreated" xml:space="preserve">
+    <value>用户新增成功。</value>
+  </data>
+  <data name="UserUpdated" xml:space="preserve">
+    <value>用户更新成功。</value>
+  </data>
+  <data name="UserDeleted" xml:space="preserve">
+    <value>用户删除成功。</value>
+  </data>
+  <data name="UserImportSummary" xml:space="preserve">
+    <value>汇入完成：新增 {0} 位，更新 {1} 位，略过 {2} 位。</value>
+  </data>
+  <data name="ExportSheetName" xml:space="preserve">
+    <value>用户清单</value>
+  </data>
+  <data name="UserNameHeader" xml:space="preserve">
+    <value>账号</value>
+  </data>
+  <data name="DisplayNameHeader" xml:space="preserve">
+    <value>姓名</value>
+  </data>
+  <data name="EmailHeader" xml:space="preserve">
+    <value>电子邮件</value>
+  </data>
+  <data name="RolesHeader" xml:space="preserve">
+    <value>角色</value>
+  </data>
+  <data name="EnabledHeader" xml:space="preserve">
+    <value>启用</value>
+  </data>
+  <data name="ExportFileName" xml:space="preserve">
+    <value>users_{0}.xlsx</value>
+  </data>
+</root>
