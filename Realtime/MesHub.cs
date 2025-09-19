@@ -1,9 +1,8 @@
-﻿
-using Microsoft.AspNet.SignalR;
-namespace MesEnterprise.Realtime
+using Microsoft.AspNetCore.SignalR;
+
+namespace MesEnterprise.Realtime;
+
+public class MesHub : Hub
 {
-    public class MesHub : Hub
-    {
-        public Task Broadcast(object dto) => Clients.All.SendAsync("broadcast", dto);
-    }
+    public async Task BroadcastAsync(object payload) => await Clients.All.SendAsync("broadcast", payload);
 }

@@ -1,13 +1,30 @@
-﻿using StackExchange.Redis;
-namespace MesEnterprise.Cache
+using Microsoft.Extensions.Configuration;
+using StackExchange.Redis;
+
+namespace MesEnterprise.Cache;
+
+public interface IRedisConnector
 {
-   
-        public interface IRedisConnector { ConnectionMultiplexer GetConnection(); }
-        public class RedisConnector : IRedisConnector
+    ConnectionMultiplexer GetConnection();
+}
+
+public sealed class RedisConnector : IRedisConnector, IDisposable
+{
+    private readonly Lazy<ConnectionMultiplexer> _connection;
+
+    public RedisConnector(IConfiguration configuration)
+    {
+        _connection = new Lazy<ConnectionMultiplexer>(() =>
+            ConnectionMultiplexer.Connect(configuration.GetConnectionString("Redis") ?? "localhost:6379"));
+    }
+
+    public ConnectionMultiplexer GetConnection() => _connection.Value;
+
+    public void Dispose()
+    {
+        if (_connection.IsValueCreated)
         {
-            private readonly Lazy<ConnectionMultiplexer> _conn;
-            public RedisConnector(IConfiguration cfg) { _conn = new Lazy<ConnectionMultiplexer>(() => ConnectionMultiplexer.Connect(cfg.GetConnectionString("Redis") ?? "localhost:6379")); }
-            public ConnectionMultiplexer GetConnection() => _conn.Value;
+            _connection.Value.Dispose();
         }
-    
+    }
 }
