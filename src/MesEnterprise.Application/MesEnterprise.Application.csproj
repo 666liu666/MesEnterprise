@@ -1,13 +1,26 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>MesEnterprise.Application</RootNamespace>
   </PropertyGroup>
+
   <ItemGroup>
-    <PackageReference Include="FluentValidation" Version="11.9.1" />
-    <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="12.2.0" />
+    <!-- MediatR 主包 v12 + DI 扩展（提供 AddMediatR(...)） -->
+
+    <!-- FluentValidation（AddValidatorsFromAssembly 来自该包）。
+         如需自动模型验证，可同时保留 AspNetCore 包 -->
+    <PackageReference Include="FluentValidation" Version="12.0.0" />
+    <PackageReference Include="FluentValidation.AspNetCore" Version="11.3.1" />
+
+    <!-- Mapster + MapsterMapper（提供 ServiceMapper / IMapper） -->
     <PackageReference Include="Mapster" Version="7.4.0" />
-    <PackageReference Include="Mapster.DependencyInjection" Version="1.1.0" />
+    <PackageReference Include="MediatR" Version="13.0.0" />
+
+    <!-- 若你使用 MapsterMapper，这里不需要 Mapster.DependencyInjection；建议移除以避免混淆 -->
   </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\MesEnterprise.Domain\MesEnterprise.Domain.csproj" />
     <ProjectReference Include="..\MesEnterprise.Shared\MesEnterprise.Shared.csproj" />

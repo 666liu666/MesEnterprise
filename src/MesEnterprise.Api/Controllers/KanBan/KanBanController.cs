@@ -3,16 +3,16 @@ using MesEnterprise.Api.Controllers;
 using MesEnterprise.Shared.Responses;
 using Microsoft.AspNetCore.Mvc;
 
-namespace MesEnterprise.Api.Controllers.KanBan;
+namespace MesEnterprise.Api.Controllers.Kanban;
 
-[Route("api/v{version:apiVersion}/kan-ban")]
+[Route("api/v{version:apiVersion}/kanban")]
 [ApiVersion("1.0")]
-public class KanBanController : ApiControllerBase
+public class KanbanController : ApiControllerBase
 {
     [HttpGet("status")]
     public IActionResult GetStatus()
     {
-        var data = new { module = "KanBan", healthy = true, timestamp = DateTimeOffset.UtcNow };
+        var data = new { module = "Kanban", healthy = true, timestamp = DateTimeOffset.UtcNow };
         return Ok(ApiResponse<object>.Ok(data));
     }
 }

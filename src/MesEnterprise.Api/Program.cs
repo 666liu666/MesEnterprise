@@ -1,4 +1,4 @@
-using System.Linq;
+﻿using System.Linq;
 using System.Threading.Tasks;
 using System.Text.Json;
 using Asp.Versioning;
@@ -64,14 +64,20 @@ builder.Services.AddSwaggerGen(options =>
 
 builder.Services.AddApiVersioning(options =>
 {
-    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.DefaultApiVersion = new ApiVersion(1, 0);   // ✅ 新版
     options.AssumeDefaultVersionWhenUnspecified = true;
     options.ReportApiVersions = true;
-    options.ApiVersionReader = ApiVersionReader.Combine(new UrlSegmentApiVersionReader());
-}).AddApiExplorer(options =>
+    options.ApiVersionReader = ApiVersionReader.Combine(
+        new UrlSegmentApiVersionReader(),
+        new HeaderApiVersionReader("x-api-version"),
+        new QueryStringApiVersionReader("api-version"));
+});
+
+// API Explorer (给 Swagger 用)
+builder.Services.AddApiVersioning(options =>
 {
-    options.GroupNameFormat = "'v'VVV";
-    options.SubstituteApiVersionInUrl = true;
+    //options.GroupNameFormat = "'v'VVV";
+    //options.SubstituteApiVersionInUrl = true;
 });
 
 builder.Services.AddProblemDetails();
@@ -129,7 +135,11 @@ app.UseEndpoints(endpoints =>
         Predicate = check => check.Tags.Contains("ready"),
         ResponseWriter = WriteHealthCheckResponse
     });
-    endpoints.MapPrometheusScraper("/metrics");
+    endpoints.MapMetrics("/metrics");
+
+    // ❌ app.MapPrometheusScraper();
+   // app.MapMetrics(); // ✅ 新版本方法
+
 });
 
 app.MapGet("/", () => Results.Redirect("/swagger"));
