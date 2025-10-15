@@ -76,6 +76,16 @@ builder.Services.AddApiVersioning(options =>
 
 builder.Services.AddProblemDetails();
 builder.Services.AddResponseCompression();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Default", policy =>
+    {
+        policy
+            .AllowAnyOrigin()
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
 
 var app = builder.Build();
 
