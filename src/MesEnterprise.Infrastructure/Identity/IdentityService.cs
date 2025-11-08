@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,6 +10,8 @@ using MesEnterprise.Domain.Identity;
 using MesEnterprise.Infrastructure.Persistence;
 using System.Security.Cryptography;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
+using Microsoft.Extensions.Options;
+using System.DirectoryServices;
 
 namespace MesEnterprise.Infrastructure.Identity;
 
@@ -16,11 +19,13 @@ public class IdentityService : IIdentityService
 {
     private readonly MesDbContext _dbContext;
     private readonly ILogger<IdentityService> _logger;
+    private readonly LdapSettings _ldapSettings;
 
-    public IdentityService(MesDbContext dbContext, ILogger<IdentityService> logger)
+    public IdentityService(MesDbContext dbContext, ILogger<IdentityService> logger, IOptions<LdapSettings> ldapOptions)
     {
         _dbContext = dbContext;
         _logger = logger;
+        _ldapSettings = ldapOptions.Value;
     }
 
     public async Task<User?> GetUserAsync(string userName, CancellationToken cancellationToken)
@@ -39,6 +44,35 @@ public class IdentityService : IIdentityService
         }
 
         return VerifyPassword(password, user.PasswordHash);
+    }
+
+    public Task<bool> ValidateOaCredentialsAsync(string userName, string password, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(userName) || string.IsNullOrWhiteSpace(password))
+        {
+            return Task.FromResult(false);
+        }
+
+        var path = BuildLdapPath();
+        if (string.IsNullOrEmpty(path))
+        {
+            _logger.LogWarning("LDAP path is not configured. Unable to validate OA credentials for user {UserName}.", userName);
+            return Task.FromResult(false);
+        }
+
+        var bindUser = string.Format(CultureInfo.InvariantCulture, _ldapSettings.BindUserFormat ?? "{0}", userName);
+
+        try
+        {
+            using var entry = new DirectoryEntry(path, bindUser, password);
+            _ = entry.NativeObject;
+            return Task.FromResult(true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "LDAP authentication failed for user {UserName}.", userName);
+            return Task.FromResult(false);
+        }
     }
 
     public async Task<IReadOnlyCollection<string>> GetRolesAsync(Guid userId, CancellationToken cancellationToken)
@@ -80,5 +114,17 @@ public class IdentityService : IIdentityService
         var salt = RandomNumberGenerator.GetBytes(16);
         var hash = KeyDerivation.Pbkdf2(password, salt, KeyDerivationPrf.HMACSHA256, iterations, 32);
         return string.Join('.', iterations, Convert.ToBase64String(salt), Convert.ToBase64String(hash));
+    }
+
+    private string BuildLdapPath()
+    {
+        if (string.IsNullOrWhiteSpace(_ldapSettings.Server))
+        {
+            return string.Empty;
+        }
+
+        var portSegment = _ldapSettings.Port > 0 ? $":{_ldapSettings.Port}" : string.Empty;
+        var baseDnSegment = string.IsNullOrWhiteSpace(_ldapSettings.BaseDn) ? string.Empty : $"/{_ldapSettings.BaseDn}";
+        return $"LDAP://{_ldapSettings.Server}{portSegment}{baseDnSegment}";
     }
 }

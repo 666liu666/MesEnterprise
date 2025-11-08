@@ -29,4 +29,16 @@ public class AuthController : ControllerBase
 
         return Ok(result);
     }
+
+    [HttpPost("oa-login")]
+    public async Task<IActionResult> LoginWithOa([FromBody] OaLoginCommand command, CancellationToken cancellationToken)
+    {
+        var result = await _sender.Send(command, cancellationToken);
+        if (!result.Success)
+        {
+            return Unauthorized(result);
+        }
+
+        return Ok(result);
+    }
 }
