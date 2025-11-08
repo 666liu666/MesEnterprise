@@ -33,6 +33,8 @@ public static class InfrastructureServiceCollectionExtensions
             options.Configuration = configuration.GetConnectionString("Redis") ?? "localhost:6379";
         });
 
+        services.Configure<LdapSettings>(configuration.GetSection("Ldap"));
+
         services.AddDbContextFactory<TenantCatalogDbContext>(options =>
         {
             options.UseOracle(configuration.GetConnectionString("TenantCatalog") ?? configuration.GetConnectionString("Oracle"));
